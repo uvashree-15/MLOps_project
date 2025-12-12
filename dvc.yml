@@ -1,0 +1,33 @@
+stages:
+  load:
+    cmd: python src/data/load_data.py
+    outs:
+      - data/raw/placementdata.csv
+  preprocess:
+    cmd: python src/preprocess.py
+    deps:
+      - data/raw/placementdata.csv
+      - src/preprocess.py
+      - src/utils.py
+    outs:
+      - data/processed/train.csv
+      - data/processed/val.csv
+      - data/processed/test.csv
+      - models/preprocessor.joblib
+  train:
+    cmd: python src/train.py
+    deps:
+      - data/processed/train.csv
+      - data/processed/val.csv
+      - src/train.py
+      - src/preprocess.py
+    outs:
+      - models/model.joblib
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+      - models/model.joblib
+      - data/processed/test.csv
+      - src/evaluate.py
+    outs:
+      - reports/evidently_report.html
