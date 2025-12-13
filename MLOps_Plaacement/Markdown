@@ -1,0 +1,287 @@
+# End-to-End MLOps Project Report
+
+## Title
+
+**Placement Status Prediction using MLOps Pipeline (MLflow, Prefect, Evidently, DVC)**
+
+---
+
+## 1. Introduction
+
+Campus placement prediction is an important binary classification problem in the education domain. The objective of this project is to design and implement an **end-to-end MLOps pipeline** that not only trains a machine learning model but also ensures **reproducibility, experiment tracking, orchestration, monitoring, and version control**.
+
+This project demonstrates industry-grade MLOps practices using:
+
+* **Scikit-learn** for model development
+* **MLflow** for experiment tracking
+* **Prefect** for workflow orchestration
+* **Evidently AI** for data drift and model performance monitoring
+* **DVC** for data and model versioning
+
+---
+
+## 2. Problem Definition
+
+* **Task Type:** Binary Classification
+* **Target Variable:** `PlacementStatus`
+
+  * `1` → Placed
+  * `0` → Not Placed
+* **Objective:** Predict whether a student will be placed based on academic, skill-based, and extracurricular features.
+
+---
+
+## 3. Dataset Description
+
+* **Dataset Name:** `placementdata.csv`
+* **Dataset Size:** ~10,000 records (satisfies minimum requirement of 300+ rows)
+* **Target Column:** `PlacementStatus`
+
+### 3.1 Feature Overview
+
+#### Numerical Features
+
+* CGPA
+* Internships
+* Projects
+* Workshops/Certifications
+* AptitudeTestScore
+* SoftSkillsRating
+* SSC_Marks
+* HSC_Marks
+
+#### Categorical Features
+
+* ExtracurricularActivities
+* PlacementTraining
+
+#### Removed Feature
+
+* `StudentID` (identifier, no predictive value)
+
+---
+
+## 4. Exploratory Data Analysis (EDA)
+
+EDA was performed to understand feature distributions and relationships.
+
+### 4.1 Dataset Summary
+
+* `df.info()` and `df.describe()` were used to inspect data types, missing values, and statistical properties.
+
+### 4.2 Target Distribution
+
+* Count plot of `PlacementStatus` confirmed class balance suitability for classification.
+
+### 4.3 Feature Insights
+
+* **CGPA vs PlacementStatus:** Boxplots showed higher CGPA values for placed students.
+* **Correlation Heatmap:** Identified moderate positive correlations between academic scores and placement outcome.
+
+---
+
+## 5. Data Preprocessing
+
+### 5.1 Data Cleaning
+
+* Column names trimmed to remove whitespace
+* `PlacementStatus` converted to binary format
+* Identifier columns removed
+
+### 5.2 Train–Validation–Test Split
+
+| Split      | Percentage |
+| ---------- | ---------- |
+| Train      | 70%        |
+| Validation | 10%        |
+| Test       | 20%        |
+
+Splits were **stratified** to preserve class distribution.
+
+All processed datasets were saved under:
+
+```
+data/processed/
+  ├── train.csv
+  ├── val.csv
+  └── test.csv
+```
+
+---
+
+## 6. Feature Engineering Pipeline
+
+A **Scikit-learn ColumnTransformer pipeline** was used.
+
+### 6.1 Numerical Pipeline
+
+* Median Imputation
+* Standard Scaling
+
+### 6.2 Categorical Pipeline
+
+* Most Frequent Imputation
+* One-Hot Encoding (handle_unknown='ignore')
+
+The preprocessing pipeline was serialized and stored as:
+
+```
+models/preprocessor.joblib
+```
+
+---
+
+## 7. Model Development
+
+### 7.1 Algorithm Selection
+
+* **Logistic Regression** chosen for:
+
+  * Interpretability
+  * Fast training
+  * Strong baseline for binary classification
+
+### 7.2 Model Pipeline
+
+```
+[Preprocessor] → [Logistic Regression]
+```
+
+### 7.3 Hyperparameter Tuning
+
+* Regularization parameter `C`: {0.1, 1.0, 10.0}
+* Evaluation Metric: **ROC-AUC** on validation set
+
+---
+
+## 8. Experiment Tracking with MLflow
+
+MLflow was configured using a **local file-based tracking server**.
+
+### Logged Components
+
+* Parameters: `clf__C`
+* Metrics: Validation ROC-AUC
+* Artifacts: Trained model pipeline
+
+### Best Model Selection
+
+* Best model chosen based on highest validation ROC-AUC
+* Final model saved as:
+
+```
+models/model.joblib
+```
+
+---
+
+## 9. Model Monitoring with Evidently AI
+
+To simulate real-world monitoring:
+
+* Test dataset split into **reference** and **production** subsets
+
+### Evidently Metrics Used
+
+* **DataDriftPreset** – Detects feature distribution shifts
+* **ClassificationPreset** – Evaluates model performance
+
+### Output
+
+* Interactive HTML report generated:
+
+```
+reports/evidently_report.html
+```
+
+This enables early detection of data drift and performance degradation.
+
+---
+
+## 10. Workflow Orchestration with Prefect
+
+Prefect was used to define a modular ML pipeline.
+
+### Pipeline Tasks
+
+1. Load Data
+2. Preprocess Data
+3. Train Model
+4. Evaluate Model
+
+### Flow Execution
+
+* All steps orchestrated using `@flow`
+* Pipeline executed locally
+
+This ensures **reliability, reusability, and scalability**.
+
+---
+
+## 11. Data & Model Versioning with DVC
+
+DVC was used to track large artifacts.
+
+### Tracked Assets
+
+* Raw dataset
+* Processed datasets
+* Preprocessor
+* Trained model
+
+### DVC Pipeline Stages
+
+* Load
+* Preprocess
+* Train
+* Evaluate
+
+This guarantees full reproducibility across environments.
+
+---
+
+## 12. Project Structure
+
+```
+├── data/
+│   ├── raw/
+│   └── processed/
+├── models/
+├── reports/
+├── mlruns/
+├── src/
+│   ├── preprocess.py
+│   ├── train.py
+│   └── evaluate.py
+├── dvc.yaml
+└── README.md
+```
+
+---
+
+## 13. Key Outcomes
+
+* Successfully built a **production-ready MLOps pipeline**
+* Achieved reproducible training with tracked experiments
+* Implemented monitoring for data drift and performance
+* Ensured version control for data and models
+
+---
+
+## 14. Conclusion
+
+This project demonstrates a complete lifecycle of a machine learning system using modern MLOps tools. The architecture is scalable, maintainable, and aligns with real-world industry practices, making it suitable for deployment and further extension.
+
+---
+
+## 15. Future Enhancements
+
+* Replace Logistic Regression with ensemble or deep learning models
+* Deploy model using FastAPI + Docker
+* Add CI/CD using GitHub Actions or Jenkins
+* Integrate cloud storage (S3, GCS) for DVC remote
+* Enable real-time monitoring with Evidently dashboards
+
+---
+
+**End of Report**
